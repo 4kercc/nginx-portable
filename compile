@@ -59,7 +59,7 @@ tar zxf ./$NGINXV.tar.gz
 echo "Configuring executable."
 
 cd ./$NGINXV
-./configure --prefix=. --sbin-path=sbin/ --conf-path=conf/nginx.conf --error-log-path=logs/error.log --http-client-body-temp-path=tmp/client_body_temp/ --http-proxy-temp-path=tmp/proxy_temp/ --http-fastcgi-temp-path=tmp/fastcgi_temp/ --http-uwsgi-temp-path=tmp/uwsgi_temp/ --http-scgi-temp-path=tmp/scgi_temp/ --with-ipv6 --with-http_ssl_module --with-http_gzip_static_module --with-http_stub_status_module --with-http_v2_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_fastcgi_module > ../../logs/compile.log
+./configure --prefix=/app/nginx  --with-http_realip_module --http-client-body-temp-path=tmp/client_body_temp/ --http-proxy-temp-path=tmp/proxy_temp/ --http-fastcgi-temp-path=tmp/fastcgi_temp/ --http-uwsgi-temp-path=tmp/uwsgi_temp/ --http-scgi-temp-path=tmp/scgi_temp/ --with-ipv6 --with-http_ssl_module --with-http_gzip_static_module --with-http_stub_status_module --with-http_v2_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --without-http_fastcgi_module > ../../logs/compile.log
 
 echo "Building executable."
 make >> ../../logs/compile.log
@@ -73,10 +73,31 @@ mkdir -p $TARGETDIR/$NGINXV/sbin
 cp -f objs/nginx $TARGETDIR/$NGINXV/sbin/
 cp -r conf $TARGETDIR/$NGINXV/
 cp -r html $TARGETDIR/$NGINXV/
+ln  $TARGETDIR/$NGINXV/sbin/nginx $TARGETDIR/$NGINXV/nginx 
+echo '[Unit]
+Description=The nginx HTTP and reverse proxy server
+After=network.target
 
+[Service]
+Type=forking
+#PIDFile=/var/run/nginx.pid
+ExecStartPre=/app/nginx/sbin/nginx -t
+ExecStart=/app/nginx/sbin/nginx
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+'>$TARGETDIR/$NGINXV/nginx.service
+echo 'cp /app/nginx/nginx.service /etc/systemd/system/nginx.service
+systemctl daemon-reload
+service nginx status'>$TARGETDIR/$NGINXV/start.sh
+mv $TARGETDIR/$NGINXV $TARGETDIR/nginx
 cd $TARGETDIR
-tar czf "$NGINXV".tar.gz $NGINXV
-rm -rf $NGINXV 
+tar czf "$NGINXV".tar.gz nginx
+rm -rf $NGINXV nginx
+chmod +x $TARGETDIR/$NGINXV/start.sh
 
 # Remove the temporary directory
 echo "Cleaning up."
