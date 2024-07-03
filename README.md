@@ -1,3 +1,22 @@
+更新说明：
+==============
+之前compile文件打包路径为相对路径，非绝对路径，导致每次都需要进入nginx路径内去启动，如果我们需要考虑用服务控制，去编写nginx.service时，需要先进入nginx路径后，执行/sbin/nginx启动，这无疑增加了毫无营养的工作量。
+
+最终解决办法：
+将nginx路径固定到/app/nginx路径，将配置文件conf固定到/app/nginx/conf/nginx.conf，这样就可以使用service来控制nginx
+
+同时，考虑到每次编译nginx后，都需要手动修改nginx.service，我也一并将nginx.service进行打包到nginx根路径下，且编写了一个start.sh脚本，用于服务注册。
+
+简而言之：
+这个版本Nginx非常完善，编译路径：/app/nginx 附带了nginx.service，后续nginx升级后，只需要正常编译，将nginx文件替换到/app/nginx/sbin/nginx即可。
+
+有个地方需要注意：
+部分centos7设备无法正常编译，会提示：
+make: *** No rule to make target `build’, needed by `default’. Stop.
+建议换机器编译，原因是nginx自己内部的问题，暂无找到其他解决办法。
+
+同时，麒麟v10操作系统，可以正常使用Debian11进行编译后的包。
+
 nginx-portable
 ==============
 
